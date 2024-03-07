@@ -41,14 +41,15 @@
             dataGridView1.Location = new Point(0, 0);
             dataGridView1.Name = "dataGridView1";
             dataGridView1.ReadOnly = true;
-            dataGridView1.Size = new Size(800, 450);
+            dataGridView1.Size = new Size(433, 260);
             dataGridView1.TabIndex = 0;
+            dataGridView1.CellContentClick += dataGridView1_CellContentClick;
             // 
             // Form3
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(433, 260);
             Controls.Add(dataGridView1);
             Name = "Form3";
             StartPosition = FormStartPosition.CenterParent;

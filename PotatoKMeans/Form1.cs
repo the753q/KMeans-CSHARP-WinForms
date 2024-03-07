@@ -12,13 +12,14 @@ namespace PotatoKMeans
             public double Y { get; } = y;
         }
 
-        double?[] dataX, dataY;
-        byte?[] dataAffiliation;
-        ClusterPoint?[]? clusterPoints;
+        private double?[] dataX, dataY;
+        private string axisX, axisY;
+        private byte?[] dataAffiliation;
+        private ClusterPoint?[]? clusterPoints;
 
-        Random random;
-        Color[]? colors;
-        Plot plot;
+        private Random random;
+        private Color[]? colors;
+        private Plot plot;
 
         public Form1()
         {
@@ -53,6 +54,7 @@ namespace PotatoKMeans
         {
             openFileDialog1.ShowDialog();
             colors = null;
+            clusterPoints = null;
             dataAffiliation = null;
             string filePath = openFileDialog1.FileName;
             string[] splitPath = filePath.Split('.');
@@ -69,6 +71,11 @@ namespace PotatoKMeans
         private void ColumnToArray(List<string[]> data, ref double?[] array, int col)
         {
             array = new double?[data.Count];
+            if (data[0][col - 1] != null && !double.TryParse(data[0][col - 1], out double _))
+            {
+                if (axisX == null) axisX = data[0][col - 1];
+                else axisY = data[0][col - 1];
+            }
             for (int i = 0; i < data.Count; i++)
             {
                 string value = data[i][col - 1];
@@ -81,6 +88,7 @@ namespace PotatoKMeans
 
         private void LoadData()
         {
+            axisX = null; axisY = null;
             clusterGroupBox.Enabled = false;
             string filePath = openFileDialog1.FileName;
             using StreamReader sr = new(filePath);
@@ -102,6 +110,8 @@ namespace PotatoKMeans
             ColumnToArray(data, ref dataX, dataColNums.Item1);
             ColumnToArray(data, ref dataY, dataColNums.Item2);
             clusterGroupBox.Enabled = true;
+            plot.XLabel(axisX ?? "");
+            plot.YLabel(axisY ?? "");
         }
 
         private int Step(bool plot = false)
@@ -213,6 +223,7 @@ namespace PotatoKMeans
 
         private void Plot(byte clusters = 0)
         {
+            if (dataX == null) return;
             plot.Clear();
             for (int i = 0; i < dataX.Length; i++)
             {
@@ -254,6 +265,8 @@ namespace PotatoKMeans
             Step(plot: true);
             await Task.Run(AutoCluster);
             Step(plot: true);
+            Form3 form3 = new(clusterPoints, axisX, axisY);
+            form3.Show();
         }
 
         private void AutoCluster()
