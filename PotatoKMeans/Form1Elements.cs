@@ -40,10 +40,5 @@
             LoadData();
             Status(false);
         }
-
-        private void lightDataCheck_CheckedChanged(object sender, EventArgs e)
-        {
-            Plot((byte)clustersNo.Value);
-        }
     }
 }

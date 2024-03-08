@@ -38,7 +38,6 @@
             selectDataBtn = new Button();
             tableLayoutPanel4 = new TableLayoutPanel();
             tableLayoutPanel11 = new TableLayoutPanel();
-            lightDataCheck = new CheckBox();
             AutoScaleBtn = new Button();
             formsPlot1 = new ScottPlot.WinForms.FormsPlot();
             groupBox2 = new GroupBox();
@@ -288,7 +287,6 @@
             tableLayoutPanel11.ColumnCount = 2;
             tableLayoutPanel11.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 121F));
             tableLayoutPanel11.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 46F));
-            tableLayoutPanel11.Controls.Add(lightDataCheck, 1, 0);
             tableLayoutPanel11.Controls.Add(AutoScaleBtn, 0, 0);
             tableLayoutPanel11.Dock = DockStyle.Fill;
             tableLayoutPanel11.Location = new Point(0, 361);
@@ -298,22 +296,6 @@
             tableLayoutPanel11.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             tableLayoutPanel11.Size = new Size(392, 30);
             tableLayoutPanel11.TabIndex = 5;
-            // 
-            // lightDataCheck
-            // 
-            lightDataCheck.Anchor = AnchorStyles.Right;
-            lightDataCheck.AutoSize = true;
-            lightDataCheck.Checked = true;
-            lightDataCheck.CheckState = CheckState.Checked;
-            lightDataCheck.FlatStyle = FlatStyle.System;
-            lightDataCheck.Location = new Point(266, 5);
-            lightDataCheck.Margin = new Padding(3, 3, 40, 3);
-            lightDataCheck.Name = "lightDataCheck";
-            lightDataCheck.Size = new Size(86, 20);
-            lightDataCheck.TabIndex = 5;
-            lightDataCheck.Text = "Light Data";
-            lightDataCheck.UseVisualStyleBackColor = true;
-            lightDataCheck.CheckedChanged += lightDataCheck_CheckedChanged;
             // 
             // AutoScaleBtn
             // 
@@ -440,7 +422,6 @@
             tableLayoutPanel8.ResumeLayout(false);
             tableLayoutPanel4.ResumeLayout(false);
             tableLayoutPanel11.ResumeLayout(false);
-            tableLayoutPanel11.PerformLayout();
             tableLayoutPanel5.ResumeLayout(false);
             statusStrip1.ResumeLayout(false);
             statusStrip1.PerformLayout();
@@ -481,6 +462,5 @@
         private OpenFileDialog openFileDialog1;
         private TableLayoutPanel tableLayoutPanel10;
         private TableLayoutPanel tableLayoutPanel11;
-        private CheckBox lightDataCheck;
     }
 }

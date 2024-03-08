@@ -41,9 +41,10 @@
             dataGridView1.Location = new Point(0, 0);
             dataGridView1.Name = "dataGridView1";
             dataGridView1.ReadOnly = true;
+            dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dataGridView1.Size = new Size(433, 260);
             dataGridView1.TabIndex = 0;
-            dataGridView1.CellContentClick += dataGridView1_CellContentClick;
+            dataGridView1.CellClick += dataGridView1_CellClick;
             // 
             // Form3
             // 
@@ -51,9 +52,12 @@
             AutoScaleMode = AutoScaleMode.Dpi;
             ClientSize = new Size(433, 260);
             Controls.Add(dataGridView1);
+            MinimumSize = new Size(449, 299);
             Name = "Form3";
             StartPosition = FormStartPosition.CenterParent;
             Text = "Centers of Clusters";
+            FormClosed += Form3_FormClosed;
+            Load += Form3_Load;
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             ResumeLayout(false);
         }

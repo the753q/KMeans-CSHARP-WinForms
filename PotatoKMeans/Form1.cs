@@ -1,4 +1,5 @@
 using ScottPlot;
+using System.Drawing;
 using System.Globalization;
 using Color = ScottPlot.Color;
 
@@ -88,6 +89,7 @@ namespace PotatoKMeans
 
         private void LoadData()
         {
+            Status(true);
             axisX = null; axisY = null;
             clusterGroupBox.Enabled = false;
             string filePath = openFileDialog1.FileName;
@@ -112,6 +114,8 @@ namespace PotatoKMeans
             clusterGroupBox.Enabled = true;
             plot.XLabel(axisX ?? "");
             plot.YLabel(axisY ?? "");
+            ResetClusters();
+            Status(false);
         }
 
         private int Step(bool plot = false)
@@ -119,7 +123,7 @@ namespace PotatoKMeans
             byte clusters = (byte)clustersNo.Value;
             UpdateCentroids(clusters);
             int updatedPoints = UpdateDataAffiliation(clusters);
-            if (plot) Plot(clusters);
+            if (plot) Plot();
             return updatedPoints;
         }
 
@@ -221,27 +225,46 @@ namespace PotatoKMeans
             return updatedPoints;
         }
 
-        private void Plot(byte clusters = 0)
+        public void Plot(int higlightNo = -1)
         {
             if (dataX == null) return;
             plot.Clear();
             for (int i = 0; i < dataX.Length; i++)
             {
                 if (dataX[i] == null || dataY[i] == null) continue;
-                Color color = new(0, 0, 0);
+                Color color = new(80, 80, 80, 200);
                 if (dataAffiliation != null && dataAffiliation[i] != null && colors != null)
                 {
                     color = colors[(byte)dataAffiliation[i]];
-                    color = lightDataCheck.Checked ? color.WithLightness(-0.3f) : color;
+                    color = color.WithLightness(-0.3f);
+                    if(higlightNo != -1)
+                    {
+                        if (higlightNo != dataAffiliation[i])
+                        {
+                            color = color.WithLightness(-0.1f);
+                            color = color.WithAlpha(200);
+                        }
+                    }
                 }
                 plot.Add.Marker((double)dataX[i], (double)dataY[i], color: color);
             }
-            for (int i = 0; i < clusters; i++)
+            if (clusterPoints != null)
             {
-                if (clusterPoints == null) continue;
-                ClusterPoint? point = clusterPoints[i];
-                if (point == null) continue;
-                plot.Add.Marker(point.Value.X, point.Value.Y, MarkerShape.Cross, 20, colors[i]);
+                for (int i = 0; i < clusterPoints.Length; i++)
+                {
+                    if (clusterPoints == null) continue;
+                    ClusterPoint? point = clusterPoints[i];
+                    if (point == null) continue;
+                    var color = colors[i];
+                    if (higlightNo != -1)
+                    {
+                        if (higlightNo != i)
+                        {
+                            color = color.WithAlpha(150);
+                        }
+                    }
+                    plot.Add.Marker(point.Value.X, point.Value.Y, MarkerShape.Cross, 20, color);
+                }
             }
             PlotScale();
         }
@@ -266,6 +289,7 @@ namespace PotatoKMeans
             await Task.Run(AutoCluster);
             Step(plot: true);
             Form3 form3 = new(clusterPoints, axisX, axisY);
+            form3.Owner = this;
             form3.Show();
         }
 

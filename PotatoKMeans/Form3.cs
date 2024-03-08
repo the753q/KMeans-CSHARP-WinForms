@@ -10,6 +10,11 @@
             ShowData(clusterPoints, axisX, axisY);
         }
 
+        private void Form3_Load(object sender, EventArgs e)
+        {
+            (Owner as Form1).Plot(higlightNo: 0);
+        }
+
         private void ShowData(ClusterPoint?[] clusterPoints, string axisX, string axisY)
         {
             dataGridView1.Columns.Add($"CentroidNo", $"Centroid");
@@ -26,9 +31,15 @@
             }
         }
 
-        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            
+            int highlightNo = dataGridView1.SelectedRows[0].HeaderCell.RowIndex;
+            (Owner as Form1).Plot(highlightNo);
+        }
+
+        private void Form3_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            (Owner as Form1).Plot();
         }
     }
 }
