@@ -1,5 +1,4 @@
 using ScottPlot;
-using System.Drawing;
 using System.Globalization;
 using Color = ScottPlot.Color;
 
@@ -7,35 +6,30 @@ namespace PotatoKMeans
 {
     public partial class Form1 : Form
     {
-        public struct ClusterPoint(double x, double y)
+        public struct Centroid(double x, double y)
         {
             public double X { get; } = x;
             public double Y { get; } = y;
         }
 
         private double?[] dataX, dataY;
-        private string axisX, axisY;
-        private byte?[] dataAffiliation;
-        private ClusterPoint?[]? clusterPoints;
+        private string axisX, axisY; // nazvy osi zo zdrojovych dat
+        private byte?[] dataAffiliation; // prislusnost dat k skupine
+        private Centroid?[]? centroids; // pozicie centroidov
 
         private Random random;
-        private Color[]? colors;
         private Plot plot;
+        private Color[]? colors; // farby pre kazdu skupinu
 
-        public Form1()
+        public Form1() // inicializacia objektu okna
         {
             InitializeComponent();
-            InitPlot();
-        }
-
-        private void InitPlot()
-        {
             random = new Random();
             plot = formsPlot1.Plot;
             Status(false);
         }
 
-        private void Status(bool working)
+        private void Status(bool working) // meni stav programu
         {
             if (!working)
             {
@@ -51,12 +45,21 @@ namespace PotatoKMeans
             }
         }
 
-        private void LoadFile()
+        private void NullData() // resetuje premenne
         {
-            openFileDialog1.ShowDialog();
             colors = null;
-            clusterPoints = null;
+            centroids = null;
             dataAffiliation = null;
+            dataX = null; dataY = null;
+            axisX = null; axisY = null;
+        }
+
+        private void LoadFile() // vyber a nacitanie .csv suboru s datasetom
+        {
+            clusterGroupBox.Enabled = false;
+            openFileDialog1.ShowDialog();
+            NullData();
+            Plot();
             string filePath = openFileDialog1.FileName;
             string[] splitPath = filePath.Split('.');
             if (!File.Exists(filePath) || splitPath.Length < 2 || splitPath[1] != "csv")
@@ -69,12 +72,13 @@ namespace PotatoKMeans
             selectDataBtn.Enabled = true;
         }
 
+        // prevod string hodnot stlpca do pola hodnot double
         private void ColumnToArray(List<string[]> data, ref double?[] array, int col)
         {
             array = new double?[data.Count];
             if (data[0][col - 1] != null && !double.TryParse(data[0][col - 1], out double _))
             {
-                if (axisX == null) axisX = data[0][col - 1];
+                if (axisX == null) axisX = data[0][col - 1]; // nacitanie nazvov osi, ak su
                 else axisY = data[0][col - 1];
             }
             for (int i = 0; i < data.Count; i++)
@@ -82,16 +86,14 @@ namespace PotatoKMeans
                 string value = data[i][col - 1];
                 if (double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out double result))
                 {
-                    array[i] = result;
+                    array[i] = result; // zapisanie hodnoty zo stlpca, ak je v ciselnom tvare
                 }
             }
         }
 
-        private void LoadData()
+        private void LoadData() // nacitanie dat z vybraneho suboru
         {
-            Status(true);
-            axisX = null; axisY = null;
-            clusterGroupBox.Enabled = false;
+            Status(working: true);
             string filePath = openFileDialog1.FileName;
             using StreamReader sr = new(filePath);
             string? line = sr.ReadLine();
@@ -100,57 +102,57 @@ namespace PotatoKMeans
             int cols = splitLine.Length;
             if (cols < 2) return;
             List<string[]> data = [];
-            while (line != null)
+            while (line != null) // nacitanie surovych dat
             {
                 data.Add(line.Split(','));
                 line = sr.ReadLine();
             }
             Form2 form2 = new(data);
-            form2.ShowDialog();
+            form2.ShowDialog(); // otvorenie okna na vyber osi X a Y
             Tuple<int, int>? dataColNums = form2.GetColNums();
-            if (dataColNums == null) return;
+            if (dataColNums == null) return; // kontrola vybranych osi
             ColumnToArray(data, ref dataX, dataColNums.Item1);
             ColumnToArray(data, ref dataY, dataColNums.Item2);
             clusterGroupBox.Enabled = true;
-            plot.XLabel(axisX ?? "");
+            plot.XLabel(axisX ?? ""); // ak nazvy os neexistuju, budu prazdne
             plot.YLabel(axisY ?? "");
-            ResetClusters();
-            Status(false);
+            ResetCentroids(); // vymazanie predoslych centroidov
+            Status(working: false);
         }
 
-        private int Step(bool plot = false)
+        private int Step(bool plot = false) // krok vpred pre centroidy
         {
             byte clusters = (byte)clustersNo.Value;
-            UpdateCentroids(clusters);
+            UpdateCentroids(clusters); // prepocita pozicie centroidov
             int updatedPoints = UpdateDataAffiliation(clusters);
             if (plot) Plot();
-            return updatedPoints;
+            return updatedPoints; // vrati pocet prestupenych bodov
         }
 
-        private void UpdateCentroids(byte clusters)
+        private void UpdateCentroids(byte clusters) // aktualizuje pozicie centroidov
         {
-            if (clusterPoints == null)
+            if (centroids == null) // inicializuje centroidy na nahodnych poziciach
             {
-                clusterPoints = new ClusterPoint?[clusters];
+                centroids = new Centroid?[clusters];
                 for (int i = 0; i < clusters; i++)
                 {
                     int j = 0, tryCounter = 0;
                     bool uniqueCentroid = false;
                     while (!uniqueCentroid && tryCounter < 110)
-                    {
+                    { // nahodna pozicia sa vyberie z existujucich bodov
                         tryCounter++;
                         j = random.Next(0, dataX.Length);
                         int nullCounter = 0;
                         while ((dataX[j] == null || dataY[j] == null) && nullCounter < 500)
-                        {
+                        { // skusa najst validny bod
                             j = random.Next(0, dataX.Length);
                             nullCounter++;
                         }
                         if (!(nullCounter < 500)) continue;
                         uniqueCentroid = true;
                         for (int k = 0; k < i; k++)
-                        {
-                            ClusterPoint existingPoint = clusterPoints[k].Value;
+                        { // skusa najst neobsadeny bod
+                            Centroid existingPoint = centroids[k].Value;
                             if (existingPoint.X == dataX[j] && existingPoint.Y == dataY[j])
                             {
                                 uniqueCentroid = false;
@@ -162,18 +164,18 @@ namespace PotatoKMeans
                     {
                         throw new Exception("More clusters than valid datapoints!");
                     }
-                    clusterPoints[i] = new ClusterPoint((double)dataX[j], (double)dataY[j]);
+                    centroids[i] = new Centroid((double)dataX[j], (double)dataY[j]);
                 }
                 clustersNo.Enabled = false;
                 return;
             }
             if (dataAffiliation == null) return;
             for (int i = 0; i < clusters; i++)
-            {
+            { // aktualizuje pozicie centroidov
                 double xSum = 0, ySum = 0;
                 int validData = 0;
                 for (int j = 0; j < dataX.Length; j++)
-                {
+                { // podla skupiny bodov vypocita priemerne hodnoty X a Y pre centroid skupiny
                     if (dataAffiliation[j] == null || dataAffiliation[j] != i) continue;
                     if (dataX[j] == null || dataY[j] == null) continue;
                     xSum += (double)dataX[j];
@@ -182,14 +184,21 @@ namespace PotatoKMeans
                 }
                 double newX = xSum / validData;
                 double newY = ySum / validData;
-                clusterPoints[i] = new ClusterPoint(newX, newY);
+                centroids[i] = new Centroid(newX, newY);
             }
         }
 
-        private int UpdateDataAffiliation(byte clusters)
+        private double CalculateDistance(Centroid centroid, double pointX, double pointY)
+        {
+            double tempX = Math.Abs((double)(centroid.X - pointX));
+            double tempY = Math.Abs((double)(centroid.Y - pointY));
+            return Math.Sqrt(Math.Pow(tempX, 2) + Math.Pow(tempY, 2));
+        }
+
+        private int UpdateDataAffiliation(byte clusters) // aktualizuje prislusnost bodov ku skupinam
         {
             if (colors == null)
-            {
+            { // vypocita novu farebnu skalu podla poctu skupin
                 colors = new Color[clusters];
                 for (int i = 0; i < clusters; i++)
                 {
@@ -200,16 +209,14 @@ namespace PotatoKMeans
             }
             int updatedPoints = 0;
             for (int i = 0; i < dataX.Length; i++)
-            {
+            { // kazdemu bodu urci prislusnost k najblizsiemu centroidu
                 if (dataX[i] == null || dataY[i] == null) continue;
                 byte closestPoint = 0;
                 double? closestDistance = null;
                 for (byte j = 0; j < clusters; j++)
                 {
-                    if (!clusterPoints[j].HasValue) continue;
-                    double tempX = Math.Abs((double)(clusterPoints[j].Value.X - dataX[i]));
-                    double tempY = Math.Abs((double)(clusterPoints[j].Value.Y - dataY[i]));
-                    double distance = Math.Sqrt(Math.Pow(tempX, 2) + Math.Pow(tempY, 2));
+                    if (!centroids[j].HasValue) continue;
+                    double distance = CalculateDistance((Centroid)centroids[j], (double)dataX[i], (double)dataY[i]);
                     if (closestDistance == null || distance < closestDistance)
                     {
                         closestPoint = j;
@@ -217,7 +224,7 @@ namespace PotatoKMeans
                     }
                 }
                 if (dataAffiliation[i] != closestPoint)
-                {
+                { // zmeni prislusnost ak je bod blizsie k inemu centroidu
                     dataAffiliation[i] = closestPoint;
                     updatedPoints++;
                 }
@@ -225,20 +232,26 @@ namespace PotatoKMeans
             return updatedPoints;
         }
 
-        public void Plot(int higlightNo = -1)
+        public void Plot(int higlightNo = -1) // vykresli body na grafe
         {
-            if (dataX == null) return;
             plot.Clear();
+            if (dataX == null)
+            {
+                plot.XLabel("");
+                plot.YLabel("");
+                RefreshPlot();
+                return;
+            }
             for (int i = 0; i < dataX.Length; i++)
             {
                 if (dataX[i] == null || dataY[i] == null) continue;
                 Color color = new(80, 80, 80, 200);
                 if (dataAffiliation != null && dataAffiliation[i] != null && colors != null)
-                {
+                { // zafarbi body podla prislusnoti k skupine
                     color = colors[(byte)dataAffiliation[i]];
                     color = color.WithLightness(-0.3f);
-                    if(higlightNo != -1)
-                    {
+                    if (higlightNo != -1)
+                    { // zprehliadni body ostatnych skupin pri zobrazeni jednej
                         if (higlightNo != dataAffiliation[i])
                         {
                             color = color.WithLightness(-0.1f);
@@ -248,16 +261,16 @@ namespace PotatoKMeans
                 }
                 plot.Add.Marker((double)dataX[i], (double)dataY[i], color: color);
             }
-            if (clusterPoints != null)
-            {
-                for (int i = 0; i < clusterPoints.Length; i++)
+            if (centroids != null)
+            { // vykresli centroidy
+                for (int i = 0; i < centroids.Length; i++)
                 {
-                    if (clusterPoints == null) continue;
-                    ClusterPoint? point = clusterPoints[i];
+                    if (centroids == null) continue;
+                    Centroid? point = centroids[i];
                     if (point == null) continue;
                     var color = colors[i];
                     if (higlightNo != -1)
-                    {
+                    { // zprehliadni centroidy ostatnych skupin pri zobrazeni jednej
                         if (higlightNo != i)
                         {
                             color = color.WithAlpha(150);
@@ -266,41 +279,78 @@ namespace PotatoKMeans
                     plot.Add.Marker(point.Value.X, point.Value.Y, MarkerShape.Cross, 20, color);
                 }
             }
-            PlotScale();
+            RefreshPlot(scale: higlightNo == -1);
         }
 
-        private void PlotScale()
+        private void RefreshPlot(bool scale = true) // prekresli graf
         {
-            plot.Axes.AutoScale();
+            if (scale) plot.Axes.AutoScale();
             formsPlot1.Refresh();
         }
 
-        private void ResetClusters()
+        private void ResetCentroids() // resetuje centroidy
         {
             colors = null;
-            clusterPoints = null;
+            centroids = null;
             clustersNo.Enabled = true;
             Plot();
         }
 
-        private async void FinishClustering()
+        private Dictionary<byte, int> GetClusterSizes() // ziska velkosti skupin
         {
-            Step(plot: true);
-            await Task.Run(AutoCluster);
-            Step(plot: true);
-            Form3 form3 = new(clusterPoints, axisX, axisY);
-            form3.Owner = this;
-            form3.Show();
+            Dictionary<byte, int> clusterSizes = new();
+            for (int i = 0; i < dataAffiliation.Length; i++)
+            {
+                if (dataAffiliation[i] == null) continue;
+                byte cluster = dataAffiliation[i].Value;
+                if (!clusterSizes.ContainsKey(cluster)) clusterSizes.Add(cluster, 0);
+                clusterSizes[cluster]++; // inkrementuje pre kazdy bod prisluchajuci skupine
+            }
+            return clusterSizes;
         }
 
-        private void AutoCluster()
+        // ziska skore hodnotiace pocet a blizkost bodov skupin k ich centroidom
+        // cim nizsie cislo, tym lepsie
+        private Dictionary<byte, double> GetCentroidProximities(Dictionary<byte, int> clusterSizes)
         {
+            Dictionary<byte, double> centroidProximities = new();
+            for (int i = 0; i < dataAffiliation.Length; i++)
+            { // pre kazdu skupinu vypocita sumu vzdialenosti bodpv
+                if (dataAffiliation[i] == null) continue;
+                byte cluster = dataAffiliation[i].Value;
+                if (!centroidProximities.ContainsKey(cluster)) centroidProximities.Add(cluster, 0);
+                double distance = CalculateDistance((Centroid)centroids[cluster], (double)dataX[i], (double)dataY[i]);
+                centroidProximities[cluster] += distance;
+            }
+            for (byte i = 0; i < clustersNo.Value; i++)
+            { // pre kazdu skupinu vydeli sumu vzdialenosti poctom bodov v skupine
+                double distance = centroidProximities[i];
+                centroidProximities[i] = distance / clusterSizes[i];
+            }
+            return centroidProximities;
+        }
+
+        private void FinishClustering() // dokonci zoskupovanie
+        {
+            AutoCluster();
+            Dictionary<byte, int> clusterSizes = GetClusterSizes();
+            Dictionary<byte, double> centroidProximities = GetCentroidProximities(clusterSizes);
+            List<object> data = [centroids, axisX, axisY, clusterSizes, centroidProximities];
+            Form3 form3 = new(data);
+            form3.Owner = this;
+            form3.Show(); // zobrazi okno so zoznamom centroidov
+        }
+
+        private void AutoCluster() // automaticky dokonci zoskupovanie
+        {
+            // pocet bodov, ktorych prislusnost moze kazdy krok preskakovat
             int threshold = (int)(dataX.Length * 0.0001);
             int maxIterations = 100000000;
             int i = 0;
             while (i < maxIterations)
-            {
+            { // vykona krok pokial nedosiahne max iteracii
                 int updatedPoints = Step();
+                // predcasne ukonci zoskupovanie ak sa prislusnost vacsiny bodov nemeni
                 if (updatedPoints <= threshold) break;
                 i++;
             }

@@ -42,7 +42,7 @@
             dataGridView1.Name = "dataGridView1";
             dataGridView1.ReadOnly = true;
             dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dataGridView1.Size = new Size(433, 260);
+            dataGridView1.Size = new Size(578, 344);
             dataGridView1.TabIndex = 0;
             dataGridView1.CellClick += dataGridView1_CellClick;
             // 
@@ -50,7 +50,7 @@
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
-            ClientSize = new Size(433, 260);
+            ClientSize = new Size(578, 344);
             Controls.Add(dataGridView1);
             MinimumSize = new Size(449, 299);
             Name = "Form3";

@@ -12,13 +12,13 @@
         private void AutoScaleBtn_Click(object sender, EventArgs e)
         {
             Status(true);
-            PlotScale();
+            RefreshPlot();
             Status(false);
         }
         private void resetBtn_Click(object sender, EventArgs e)
         {
             Status(true);
-            ResetClusters();
+            ResetCentroids();
             Status(false);
         }
 

@@ -1,39 +1,54 @@
 ﻿namespace PotatoKMeans
 {
-    using ClusterPoint = Form1.ClusterPoint;
+    using Centroid = Form1.Centroid;
 
     public partial class Form3 : Form
     {
-        public Form3(ClusterPoint?[] clusterPoints, string axisX, string axisY)
+        private int highlightNo;
+
+        public Form3(List<object> data)
         {
             InitializeComponent();
-            ShowData(clusterPoints, axisX, axisY);
+            ShowData(data);
+            highlightNo = 0;
         }
 
         private void Form3_Load(object sender, EventArgs e)
         {
-            (Owner as Form1).Plot(higlightNo: 0);
+            (Owner as Form1).Plot(highlightNo);
         }
 
-        private void ShowData(ClusterPoint?[] clusterPoints, string axisX, string axisY)
+        private void ShowData(List<object> data)
         {
+            Centroid?[] centroids = (Centroid?[])data[0];
+            string axisX = (string)data[1];
+            string axisY = (string)data[2];
+            Dictionary<byte, int> groupSize = (Dictionary<byte, int>)data[3];
+            Dictionary<byte, double> centroidProximities = (Dictionary<byte, double>)data[4];
             dataGridView1.Columns.Add($"CentroidNo", $"Centroid");
             dataGridView1.Columns.Add($"X axis", $"{axisX ?? "X axis"}");
             dataGridView1.Columns.Add($"Y axis", $"{axisY ?? "Y axis"}");
+            dataGridView1.Columns.Add($"Cluster Size", "Cluster Size");
+            dataGridView1.Columns.Add($"Centroid Proximities", "Centroid Proximities");
             int centroidNo = 1;
-            for (int i = 0; i < clusterPoints.Length; i++)
+            for (byte i = 0; i < centroids.Length; i++)
             {
-                if (clusterPoints[i] == null) continue;
-                ClusterPoint point = clusterPoints[i].Value;
-                string[] coords = [$"{centroidNo}", point.X.ToString(), point.Y.ToString()];
-                dataGridView1.Rows.Add(coords);
+                if (centroids[i] == null) continue;
+                Centroid point = centroids[i].Value;
+                object[] row = [centroidNo, point.X, point.Y, groupSize[i], centroidProximities[i]];
+                dataGridView1.Rows.Add(row);
                 centroidNo++;
             }
         }
 
         private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            int highlightNo = dataGridView1.SelectedRows[0].HeaderCell.RowIndex;
+            int lastHighlight = highlightNo;
+            if (int.TryParse(dataGridView1.SelectedRows[0].Cells[0].Value.ToString(), out int centroid))
+            {
+                highlightNo = centroid - 1;
+            }
+            if (lastHighlight == highlightNo) return;
             (Owner as Form1).Plot(highlightNo);
         }
 
