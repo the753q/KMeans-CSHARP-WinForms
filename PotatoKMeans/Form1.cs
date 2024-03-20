@@ -249,12 +249,12 @@ namespace PotatoKMeans
                 if (dataAffiliation != null && dataAffiliation[i] != null && colors != null)
                 { // zafarbi body podla prislusnoti k skupine
                     color = colors[(byte)dataAffiliation[i]];
-                    color = color.WithLightness(-0.3f);
+                    color = color.WithLightness(0.7f);
                     if (higlightNo != -1)
                     { // zprehliadni body ostatnych skupin pri zobrazeni jednej
                         if (higlightNo != dataAffiliation[i])
                         {
-                            color = color.WithLightness(-0.1f);
+                            color = color.WithLightness(0.9f);
                             color = color.WithAlpha(200);
                         }
                     }
