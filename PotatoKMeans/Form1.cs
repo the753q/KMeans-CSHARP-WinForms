@@ -93,6 +93,7 @@ namespace PotatoKMeans
 
         private void LoadData() // nacitanie dat z vybraneho suboru
         {
+            NullData();
             Status(working: true);
             string filePath = openFileDialog1.FileName;
             using StreamReader sr = new(filePath);
@@ -315,7 +316,7 @@ namespace PotatoKMeans
         {
             Dictionary<byte, double> centroidProximities = new();
             for (int i = 0; i < dataAffiliation.Length; i++)
-            { // pre kazdu skupinu vypocita sumu vzdialenosti bodpv
+            { // pre kazdu skupinu vypocita sumu vzdialenosti bodov
                 if (dataAffiliation[i] == null) continue;
                 byte cluster = dataAffiliation[i].Value;
                 if (!centroidProximities.ContainsKey(cluster)) centroidProximities.Add(cluster, 0);
