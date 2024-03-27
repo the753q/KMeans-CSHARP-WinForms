@@ -316,7 +316,6 @@ namespace PotatoKMeans
         }
 
         // ziska skore hodnotiace pocet a blizkost bodov skupin k ich centroidom
-        // cim nizsie cislo, tym lepsie
         private Dictionary<byte, double> GetCentroidProximities(Dictionary<byte, int> clusterSizes)
         {
             Dictionary<byte, double> centroidProximities = new();
