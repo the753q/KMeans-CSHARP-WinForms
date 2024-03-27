@@ -130,44 +130,49 @@ namespace PotatoKMeans
             return updatedPoints; // vrati pocet prestupenych bodov
         }
 
+        private void GenerateCentroids(byte clusters) // generuje centroidy
+        {
+            centroids = new Centroid?[clusters];
+            for (int i = 0; i < clusters; i++)
+            {
+                int j = 0, tryCounter = 0;
+                bool uniqueCentroid = false;
+                while (!uniqueCentroid && tryCounter < 110)
+                { // nahodna pozicia centroidov sa vyberie z existujucich bodov
+                    tryCounter++;
+                    j = random.Next(0, dataX.Length);
+                    int nullCounter = 0;
+                    while ((dataX[j] == null || dataY[j] == null) && nullCounter < 500)
+                    { // skusa najst validny bod
+                        j = random.Next(0, dataX.Length);
+                        nullCounter++;
+                    }
+                    if (!(nullCounter < 500)) continue;
+                    uniqueCentroid = true;
+                    for (int k = 0; k < i; k++)
+                    { // skusa najst neobsadeny bod
+                        Centroid existingPoint = centroids[k].Value;
+                        if (existingPoint.X == dataX[j] && existingPoint.Y == dataY[j])
+                        {
+                            uniqueCentroid = false;
+                            break;
+                        }
+                    }
+                }
+                if (!(tryCounter < 110))
+                { // vyhodi chybu ak sa centroidy nepodarilo vytvorit
+                    throw new Exception("More clusters than valid datapoints!");
+                }
+                centroids[i] = new Centroid((double)dataX[j], (double)dataY[j]);
+            }
+            clustersNo.Enabled = false;
+        }
+
         private void UpdateCentroids(byte clusters) // aktualizuje pozicie centroidov
         {
-            if (centroids == null) // inicializuje centroidy na nahodnych poziciach
+            if (centroids == null) // vygeneruje centroidy
             {
-                centroids = new Centroid?[clusters];
-                for (int i = 0; i < clusters; i++)
-                {
-                    int j = 0, tryCounter = 0;
-                    bool uniqueCentroid = false;
-                    while (!uniqueCentroid && tryCounter < 110)
-                    { // nahodna pozicia sa vyberie z existujucich bodov
-                        tryCounter++;
-                        j = random.Next(0, dataX.Length);
-                        int nullCounter = 0;
-                        while ((dataX[j] == null || dataY[j] == null) && nullCounter < 500)
-                        { // skusa najst validny bod
-                            j = random.Next(0, dataX.Length);
-                            nullCounter++;
-                        }
-                        if (!(nullCounter < 500)) continue;
-                        uniqueCentroid = true;
-                        for (int k = 0; k < i; k++)
-                        { // skusa najst neobsadeny bod
-                            Centroid existingPoint = centroids[k].Value;
-                            if (existingPoint.X == dataX[j] && existingPoint.Y == dataY[j])
-                            {
-                                uniqueCentroid = false;
-                                break;
-                            }
-                        }
-                    }
-                    if (!(tryCounter < 110))
-                    {
-                        throw new Exception("More clusters than valid datapoints!");
-                    }
-                    centroids[i] = new Centroid((double)dataX[j], (double)dataY[j]);
-                }
-                clustersNo.Enabled = false;
+                GenerateCentroids(clusters);
                 return;
             }
             if (dataAffiliation == null) return;
